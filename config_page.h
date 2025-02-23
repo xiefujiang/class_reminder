@@ -16,12 +16,13 @@ class config_page : public QWidget
 public:
     explicit config_page(QWidget *parent = nullptr);
     ~config_page();
+    void SetStartup(bool is_startup);
 
 signals:
     void sendChangeSize(int position);//[1, 100]
     void sendChangeTransparency(int position); //[0, 255]
     void sendEditData(QStringList DataList, QModelIndex &index);
-    void sendChangeColor(QColor color);
+    void sendChangeColor(QString color);
 
 public slots:
     void RecvSaveData(QString Complete_Data, QModelIndex &index);

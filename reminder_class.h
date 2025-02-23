@@ -73,6 +73,7 @@ public:
     void toggleTransparentForInput(bool state);
     wkday DateToWkday(QDateTime time1);
     timing time2timing(QDateTime time, bool is_F_or_G);
+
     //unit_day NO_LESSON_TODAY;//用于代替周六周日的unit_day
     //unit_lesson NO_LESSON_NOW;//用于代替没课的节次
     void ReadCLSFromCFG();
@@ -93,7 +94,9 @@ public slots:
 
     void RecvTransparecyChanged(int processed);
 
-    void RecvChangeColor(QColor color);
+    void RecvChangeColor(QString color);
+
+    void ToggleTopBottom();
 
 protected:
     void mouseMoveEvent(QMouseEvent *event);

@@ -1,5 +1,6 @@
 #include "reminder_class.h"
 #include "ui_reminder_class.h"
+#include <windows.h>
 #include <QSystemTrayIcon>
 #include <QDateTime>
 #include <QTimer>
@@ -11,7 +12,7 @@
 #include <QScreen>
 #include <QFontDatabase>
 #include <QMouseEvent>
-
+#include <QProcess>
 
 //cfg-datetime-format:"yyyy-mm-dd"
 
@@ -23,22 +24,20 @@ wkday Currentwkday;
 int Current_wk_num;
 loaded_cources Loaded_Cources;
 QDateTime currentTime;
-QString CurrentTransparency = "180";
-QString CurrentColor;
-
+int CurrentTransparency = 180;
+QString CurrentColorInQColor = QColor::fromRgb(255,255,255).name();
+bool isTop = false;
 
 
 Reminder_class::Reminder_class(QWidget *parent)
-    : QWidget(parent, Qt::WindowStaysOnTopHint)
+    : QWidget(parent/*, Qt::WindowStaysOnTopHint*/)
     , ui(new Ui::Reminder_class)
 {
     ui->setupUi(this);
     QScreen *screen = QGuiApplication::primaryScreen();
-    QRect mm = screen->availableGeometry();
-    monitor_x = mm.width();
-    monitor_y = mm.height();
-
-
+    QSize size = screen->size();
+    monitor_x = size.width();
+    monitor_y = size.height();
 
     ui->left->installEventFilter(this);
     ui->right->installEventFilter(this);
@@ -46,8 +45,6 @@ Reminder_class::Reminder_class(QWidget *parent)
 
     ui->left->hide();
     ui->right->hide();
-
-
     ui->left->setMouseTracking(true);
     this->setMouseTracking(true);
 
@@ -63,11 +60,12 @@ Reminder_class::Reminder_class(QWidget *parent)
     this->setGeometry(monitor_x-width, 0, width, height);
     this->setFixedSize(width, height);
     ui->frame->setFixedSize(width, height);
-    qDebug() << "width" << width << "height" << height;
+    //qDebug() << "width" << width << "height" << height;
 
     ui->frame->repaint();
 
     ReadCLSFromCFG();
+    //qDebug() << Loaded_Cources.thursday.les2.Name;
 
     CurrentDay = QDateTime::currentDateTime();
     QString temp = CurrentDay.toString("dddd");
@@ -78,7 +76,7 @@ Reminder_class::Reminder_class(QWidget *parent)
     timer->start(1000);
     ui->label_time->show();
     //ui->label_date->show();
-    qDebug() << temp;
+    //qDebug() << temp;
 
     if(temp == "Monday")
     {
@@ -103,6 +101,7 @@ Reminder_class::Reminder_class(QWidget *parent)
         Currentwkday.Chinese = "周四";
         Currentwkday.num = 4;
         ui->label_Checking_wkday->setText("周四");
+        qDebug() <<"周四";
     }
     else if(temp == "Friday")
     {
@@ -124,23 +123,25 @@ Reminder_class::Reminder_class(QWidget *parent)
     }
 
 
-    qDebug() << "1";
+    //qDebug() << "1";
+    this->setWindowFlag(Qt::WindowStaysOnBottomHint);
     this->setWindowFlag(Qt::FramelessWindowHint);
     this->setWindowFlag(Qt::Tool);
-    //this->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     this->setWindowFlag(Qt::WindowTransparentForInput);
-    //ui->left->setWindowFlags(ui->left->windowFlags()& ~Qt::WindowTransparentForInput);
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     this->setWindowTitle("Reminder");
+    this->setWindowIcon(QIcon(":/icon/res/Reminder_icon_filled.png"));
 
     QString filename = QCoreApplication::applicationDirPath();
+    //qDebug() << filename;
     filename += "/config/cfg.ini";
     QSettings cfg(filename, QSettings::IniFormat);
     cfg.beginGroup("Main");
     if(!cfg.value("initialized").toBool())   //初始化cfg----------------------------
     {
-        QMessageBox::warning(NULL, "ERROR", "配置文件已损坏，请重新配置课表!", QMessageBox::Ok);
+        config_class.SetStartup(true);
         cfg.endGroup();
+        QMessageBox::warning(NULL, "ERROR", "配置文件已损坏，请重新配置课表!", QMessageBox::Ok);
         QStringList list_wkdays = QObject::tr("Monday,Tuesday,Wednesday,Thursday,Friday").split(",");
         QStringList list_cls = QObject::tr("cls1_,cls2_,cls3_,cls4_,cls5_").split(",");
         QStringList list_subcls = QObject::tr("name,teacher,clsrm").split(",");
@@ -158,13 +159,36 @@ Reminder_class::Reminder_class(QWidget *parent)
         }
         cfg.beginGroup("Main");
         cfg.setValue("initialized", true);
+        cfg.setValue("account","");
+        cfg.setValue("password","");
+        cfg.setValue("checking_date","");
+        cfg.setValue("is_allow_startup",true);
+        cfg.setValue("bg_color_red",255);
+        cfg.setValue("bg_color_green",255);
+        cfg.setValue("bg_color_blue",255);
+        cfg.setValue("bg_transparency",150);
+        CurrentColorInQColor=QColor(255,255,255).name();
+        CurrentTransparency=150;
+
+        qApp->quit();
+        QProcess::startDetached(qApp->applicationFilePath(), QStringList());
     }
     else cfg.endGroup();
-    ui->frame->setStyleSheet("QFrame {border-bottom-left-radius: 20%;border-top-left-radius: 20%;background-color: rgba(255, 255, 255, 150);}");
-    //ui->frame->repaint();
+    cfg.beginGroup("Main");
+    CurrentColorInQColor = QColor::fromRgb(cfg.value("bg_color_red").toInt(),cfg.value("bg_color_green").toInt(),cfg.value("bg_color_blue").toInt()).name();
+    CurrentTransparency = cfg.value("bg_transparency").toInt();
+    //qDebug() << "read:" << CurrentColorInQColor << CurrentTransparency;
+    QString str="QFrame {border-bottom-left-radius: 20%;background-color: rgba(";
+    str += cfg.value("bg_color_red").toString();
+    str += ",";
+    str += cfg.value("bg_color_green").toString();
+    str += ",";
+    str += cfg.value("bg_color_blue").toString();
+    str += ",";
+    str += cfg.value("bg_transparency").toString();
+    str += ");}";
+    ui->frame->setStyleSheet(str);
 
-
-    qDebug() << "2";
     QStringList header={"1,2节","3,4节","5,6节","7,8节","9,10节"};
     ui->tableWidget->setVerticalHeaderLabels(header);
     for(int i = 0; i<5; i++)
@@ -173,15 +197,13 @@ Reminder_class::Reminder_class(QWidget *parent)
     }
     ui->tableWidget->setColumnWidth(0,300);
     ui->tableWidget->setStyleSheet("background-color: rgba(0, 0, 0, 0); border-radius: 0px;");
-    ui->tableWidget->setItem(0,1, new QTableWidgetItem("asd"));
-    ui->tableWidget->setItem(0,2, new QTableWidgetItem("zxc"));
-    ui->tableWidget->setItem(0,3, new QTableWidgetItem("qaz"));
-    ui->tableWidget->setItem(0,4, new QTableWidgetItem("wsx"));
+    ui->tableWidget->setItem(0,1, new QTableWidgetItem(" "));
+    ui->tableWidget->setItem(0,2, new QTableWidgetItem(" "));
+    ui->tableWidget->setItem(0,3, new QTableWidgetItem(" "));
+    ui->tableWidget->setItem(0,4, new QTableWidgetItem(" "));
     QStringList strs={"cls1","cls2","cls3","cls4","cls5"};
-    //qDebug() << Loaded_Cources.today->les1.Name;
 
-    qDebug() << "3";
-    Currentwkday.num=1;
+    //Currentwkday.num=5;
     switch (Currentwkday.num) {
     case 1:
         if(Loaded_Cources.monday.les1.is_this_exist)
@@ -237,169 +259,171 @@ Reminder_class::Reminder_class(QWidget *parent)
     case 2:
         if(Loaded_Cources.tuesday.les1.is_this_exist)
         {
-            strs.append(Loaded_Cources.tuesday.les1.Name+" "+Loaded_Cources.tuesday.les1.Teacher+" "+Loaded_Cources.tuesday.les1.Classroom);
+            strs[0]=(Loaded_Cources.tuesday.les1.Name+" "+Loaded_Cources.tuesday.les1.Teacher+" "+Loaded_Cources.tuesday.les1.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[0]=("none");
         }
         if(Loaded_Cources.tuesday.les2.is_this_exist)
         {
-            strs.append(Loaded_Cources.tuesday.les2.Name+" "+Loaded_Cources.tuesday.les2.Teacher+" "+Loaded_Cources.tuesday.les2.Classroom);
+            strs[1]=(Loaded_Cources.tuesday.les2.Name+" "+Loaded_Cources.tuesday.les2.Teacher+" "+Loaded_Cources.tuesday.les2.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[1]=("none");
         }
         if(Loaded_Cources.tuesday.les3.is_this_exist)
         {
-            strs.append(Loaded_Cources.tuesday.les3.Name+" "+Loaded_Cources.tuesday.les3.Teacher+" "+Loaded_Cources.tuesday.les3.Classroom);
+            strs[2]=(Loaded_Cources.tuesday.les3.Name+" "+Loaded_Cources.tuesday.les3.Teacher+" "+Loaded_Cources.tuesday.les3.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[2]=("none");
         }
         if(Loaded_Cources.tuesday.les4.is_this_exist)
         {
-            strs.append(Loaded_Cources.tuesday.les4.Name+" "+Loaded_Cources.tuesday.les4.Teacher+" "+Loaded_Cources.tuesday.les4.Classroom);
+            strs[3]=(Loaded_Cources.tuesday.les4.Name+" "+Loaded_Cources.tuesday.les4.Teacher+" "+Loaded_Cources.tuesday.les4.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[3]=("none");
         }
         if(Loaded_Cources.tuesday.les5.is_this_exist)
         {
-            strs.append(Loaded_Cources.tuesday.les5.Name+" "+Loaded_Cources.tuesday.les5.Teacher+" "+Loaded_Cources.tuesday.les5.Classroom);
+            strs[4]=(Loaded_Cources.tuesday.les5.Name+" "+Loaded_Cources.tuesday.les5.Teacher+" "+Loaded_Cources.tuesday.les5.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[4]=("none");
         }
         break;
     case 3:
         if(Loaded_Cources.wednesday.les1.is_this_exist)
         {
-            strs.append(Loaded_Cources.wednesday.les1.Name+" "+Loaded_Cources.wednesday.les1.Teacher+" "+Loaded_Cources.wednesday.les1.Classroom);
+            strs[0]=(Loaded_Cources.wednesday.les1.Name+" "+Loaded_Cources.wednesday.les1.Teacher+" "+Loaded_Cources.wednesday.les1.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[0]=("none");
         }
         if(Loaded_Cources.wednesday.les2.is_this_exist)
         {
-            strs.append(Loaded_Cources.wednesday.les2.Name+" "+Loaded_Cources.wednesday.les2.Teacher+" "+Loaded_Cources.wednesday.les2.Classroom);
+            strs[1]=(Loaded_Cources.wednesday.les2.Name+" "+Loaded_Cources.wednesday.les2.Teacher+" "+Loaded_Cources.wednesday.les2.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[1]=("none");
         }
         if(Loaded_Cources.wednesday.les3.is_this_exist)
         {
-            strs.append(Loaded_Cources.wednesday.les3.Name+" "+Loaded_Cources.wednesday.les3.Teacher+" "+Loaded_Cources.wednesday.les3.Classroom);
+            strs[2]=(Loaded_Cources.wednesday.les3.Name+" "+Loaded_Cources.wednesday.les3.Teacher+" "+Loaded_Cources.wednesday.les3.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[2]=("none");
         }
         if(Loaded_Cources.wednesday.les4.is_this_exist)
         {
-            strs.append(Loaded_Cources.wednesday.les4.Name+" "+Loaded_Cources.wednesday.les4.Teacher+" "+Loaded_Cources.wednesday.les4.Classroom);
+            strs[3]=(Loaded_Cources.wednesday.les4.Name+" "+Loaded_Cources.wednesday.les4.Teacher+" "+Loaded_Cources.wednesday.les4.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[3]=("none");
         }
         if(Loaded_Cources.wednesday.les5.is_this_exist)
         {
-            strs.append(Loaded_Cources.wednesday.les5.Name+" "+Loaded_Cources.wednesday.les5.Teacher+" "+Loaded_Cources.wednesday.les5.Classroom);
+            strs[4]=(Loaded_Cources.wednesday.les5.Name+" "+Loaded_Cources.wednesday.les5.Teacher+" "+Loaded_Cources.wednesday.les5.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[4]=("none");
         }
         break;
     case 4:
+        qDebug() << "case 4";
         if(Loaded_Cources.thursday.les1.is_this_exist)
         {
-            strs.append(Loaded_Cources.thursday.les1.Name+" "+Loaded_Cources.thursday.les1.Teacher+" "+Loaded_Cources.thursday.les1.Classroom);
+            strs[0]=Loaded_Cources.thursday.les1.Name+" "+Loaded_Cources.thursday.les1.Teacher+" "+Loaded_Cources.thursday.les1.Classroom;
         }
         else
         {
-            strs.append("none");
+            strs[0]="none";
         }
+        qDebug() << Loaded_Cources.thursday.les2.Name;
         if(Loaded_Cources.thursday.les2.is_this_exist)
         {
-            strs.append(Loaded_Cources.thursday.les2.Name+" "+Loaded_Cources.thursday.les2.Teacher+" "+Loaded_Cources.thursday.les2.Classroom);
+            strs[1]=Loaded_Cources.thursday.les2.Name+" "+Loaded_Cources.thursday.les2.Teacher+" "+Loaded_Cources.thursday.les2.Classroom;
         }
         else
         {
-            strs.append("none");
+            strs[1]="none";
         }
         if(Loaded_Cources.thursday.les3.is_this_exist)
         {
-            strs.append(Loaded_Cources.thursday.les3.Name+" "+Loaded_Cources.thursday.les3.Teacher+" "+Loaded_Cources.thursday.les3.Classroom);
+            strs[2]=(Loaded_Cources.thursday.les3.Name+" "+Loaded_Cources.thursday.les3.Teacher+" "+Loaded_Cources.thursday.les3.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[2]=("none");
         }
         if(Loaded_Cources.thursday.les4.is_this_exist)
         {
-            strs.append(Loaded_Cources.thursday.les4.Name+" "+Loaded_Cources.thursday.les4.Teacher+" "+Loaded_Cources.thursday.les4.Classroom);
+            strs[3]=(Loaded_Cources.thursday.les4.Name+" "+Loaded_Cources.thursday.les4.Teacher+" "+Loaded_Cources.thursday.les4.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[3]=("none");
         }
         if(Loaded_Cources.thursday.les5.is_this_exist)
         {
-            strs.append(Loaded_Cources.thursday.les5.Name+" "+Loaded_Cources.thursday.les5.Teacher+" "+Loaded_Cources.thursday.les5.Classroom);
+            strs[4]=(Loaded_Cources.thursday.les5.Name+" "+Loaded_Cources.thursday.les5.Teacher+" "+Loaded_Cources.thursday.les5.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[4]=("none");
         }
         break;
     case 5:
         if(Loaded_Cources.friday.les1.is_this_exist)
         {
-            strs.append(Loaded_Cources.friday.les1.Name+" "+Loaded_Cources.friday.les1.Teacher+" "+Loaded_Cources.friday.les1.Classroom);
+            strs[0]=(Loaded_Cources.friday.les1.Name+" "+Loaded_Cources.friday.les1.Teacher+" "+Loaded_Cources.friday.les1.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[0]=("none");
         }
         if(Loaded_Cources.friday.les2.is_this_exist)
         {
-            strs.append(Loaded_Cources.friday.les2.Name+" "+Loaded_Cources.friday.les2.Teacher+" "+Loaded_Cources.friday.les2.Classroom);
+            strs[1]=(Loaded_Cources.friday.les2.Name+" "+Loaded_Cources.friday.les2.Teacher+" "+Loaded_Cources.friday.les2.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[1]=("none");
         }
         if(Loaded_Cources.friday.les3.is_this_exist)
         {
-            strs.append(Loaded_Cources.friday.les3.Name+" "+Loaded_Cources.friday.les3.Teacher+" "+Loaded_Cources.friday.les3.Classroom);
+            strs[2]=(Loaded_Cources.friday.les3.Name+" "+Loaded_Cources.friday.les3.Teacher+" "+Loaded_Cources.friday.les3.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[2]=("none");
         }
         if(Loaded_Cources.friday.les4.is_this_exist)
         {
-            strs.append(Loaded_Cources.friday.les4.Name+" "+Loaded_Cources.friday.les4.Teacher+" "+Loaded_Cources.friday.les4.Classroom);
+            strs[3]=(Loaded_Cources.friday.les4.Name+" "+Loaded_Cources.friday.les4.Teacher+" "+Loaded_Cources.friday.les4.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[3]=("none");
         }
         if(Loaded_Cources.friday.les5.is_this_exist)
         {
-            strs.append(Loaded_Cources.friday.les5.Name+" "+Loaded_Cources.friday.les5.Teacher+" "+Loaded_Cources.friday.les5.Classroom);
+            strs[4]=(Loaded_Cources.friday.les5.Name+" "+Loaded_Cources.friday.les5.Teacher+" "+Loaded_Cources.friday.les5.Classroom);
         }
         else
         {
-            strs.append("none");
+            strs[4]=("none");
         }
         break;
 
@@ -416,8 +440,14 @@ Reminder_class::Reminder_class(QWidget *parent)
         break;
     }
 
-
-    qDebug() << "4";
+    if(Currentwkday.num==6||Currentwkday.num==7)
+    {
+        for(int i = 0; i<5; i++)
+        {
+            ui->tableWidget->setItem(0,i,new QTableWidgetItem(""));
+        }
+        return;
+    }
     for(int i =0; i<5; i++)
     {
         if(strs[i]=="none")
@@ -427,7 +457,9 @@ Reminder_class::Reminder_class(QWidget *parent)
         }
         ui->tableWidget->setItem(0,i,new QTableWidgetItem(strs[i]));
     }
-    qDebug() << "111"<<strs;
+
+    //ui->tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section { background-color: rgba(0, 0, 0, 0); }");
+    //ui->tableWidget->setStyleSheet("background-color: rgba(0, 0, 0, 0);border-radius:10px;");
 }
 
 Reminder_class::~Reminder_class()
@@ -452,6 +484,7 @@ void Reminder_class::toggleTransparentForInput(bool state)
 //根据当前时间计算此时状态
 timing Reminder_class::time2timing(QDateTime time, bool is_F_or_G)
 {
+    return timing();
     // QDateTime start1(time.date(), QTime(8, 30, 0));
     // QDateTime end1(time.date(), QTime(10, 5, 0));
     // QDateTime start2(time.date(), QTime(10, 25, 0));
@@ -533,75 +566,55 @@ timing Reminder_class::time2timing(QDateTime time, bool is_F_or_G)
     // return ret;
 }
 
+
 void Reminder_class::ReadCLSFromCFG()
 {
     QString filename = QCoreApplication::applicationDirPath();
     filename += "/config/cfg.ini";
     QSettings cfg(filename, QSettings::IniFormat);
+
     QStringList list_wkdays = QObject::tr("Monday,Tuesday,Wednesday,Thursday,Friday").split(",");
     QStringList list_cls = QObject::tr("cls1_,cls2_,cls3_,cls4_,cls5_").split(",");
     QStringList list_subcls = QObject::tr("name,teacher,clsrm").split(",");
-    cfg.beginGroup(list_wkdays[0]);
 
-    if(cfg.value(list_cls[0]+list_subcls[0])=="none"&&cfg.value(list_cls[0]+list_subcls[1])=="none"&&cfg.value(list_cls[0]+list_subcls[2])=="none")
-    {
-        Loaded_Cources.monday.les1.is_this_exist = false;
-    }
-    else
-    {
-        Loaded_Cources.monday.les1.is_this_exist = true;
-        Loaded_Cources.monday.les1.Name = cfg.value(list_cls[0]+list_subcls[0]).toString();
-        Loaded_Cources.monday.les1.Teacher = cfg.value(list_cls[0]+list_subcls[1]).toString();
-        Loaded_Cources.monday.les1.Classroom = cfg.value(list_cls[0]+list_subcls[2]).toString();
-    }
-    if(cfg.value(list_cls[1]+list_subcls[0])=="none"&&cfg.value(list_cls[1]+list_subcls[1])=="none"&&cfg.value(list_cls[1]+list_subcls[2])=="none")
-    {
-        Loaded_Cources.monday.les2.is_this_exist = false;
-    }
-    else
-    {
-        Loaded_Cources.monday.les2.is_this_exist = true;
-        Loaded_Cources.monday.les2.Name = cfg.value(list_cls[1]+list_subcls[0]).toString();
-        Loaded_Cources.monday.les2.Teacher = cfg.value(list_cls[1]+list_subcls[1]).toString();
-        Loaded_Cources.monday.les2.Classroom = cfg.value(list_cls[1]+list_subcls[2]).toString();
-    }
-    if(cfg.value(list_cls[2]+list_subcls[0])=="none"&&cfg.value(list_cls[2]+list_subcls[1])=="none"&&cfg.value(list_cls[2]+list_subcls[2])=="none")
-    {
-        Loaded_Cources.monday.les3.is_this_exist = false;
-    }
-    else
-    {
-        Loaded_Cources.monday.les3.is_this_exist = true;
-        Loaded_Cources.monday.les3.Name = cfg.value(list_cls[2]+list_subcls[0]).toString();
-        Loaded_Cources.monday.les3.Teacher = cfg.value(list_cls[2]+list_subcls[1]).toString();
-        Loaded_Cources.monday.les3.Classroom = cfg.value(list_cls[2]+list_subcls[2]).toString();
-    }
-    if(cfg.value(list_cls[3]+list_subcls[0])=="none"&&cfg.value(list_cls[3]+list_subcls[1])=="none"&&cfg.value(list_cls[3]+list_subcls[2])=="none")
-    {
-        Loaded_Cources.monday.les4.is_this_exist = false;
-    }
-    else
-    {
-        Loaded_Cources.monday.les4.is_this_exist = true;
-        Loaded_Cources.monday.les4.Name = cfg.value(list_cls[3]+list_subcls[0]).toString();
-        Loaded_Cources.monday.les4.Teacher = cfg.value(list_cls[3]+list_subcls[1]).toString();
-        Loaded_Cources.monday.les4.Classroom = cfg.value(list_cls[3]+list_subcls[2]).toString();
-    }
-    if(cfg.value(list_cls[4]+list_subcls[0])=="none"&&cfg.value(list_cls[4]+list_subcls[1])=="none"&&cfg.value(list_cls[4]+list_subcls[2])=="none")
-    {
-        Loaded_Cources.monday.les5.is_this_exist = false;
-    }
-    else
-    {
-        Loaded_Cources.monday.les5.is_this_exist = true;
-        Loaded_Cources.monday.les5.Name = cfg.value(list_cls[4]+list_subcls[0]).toString();
-        Loaded_Cources.monday.les5.Teacher = cfg.value(list_cls[4]+list_subcls[1]).toString();
-        Loaded_Cources.monday.les5.Classroom = cfg.value(list_cls[4]+list_subcls[2]).toString();
-    }
+    // 遍历从周一到周五
+    for (int i = 0; i < list_wkdays.size(); ++i) {
+        // 进入每一天的组
+        cfg.beginGroup(list_wkdays[i]);
 
+        // 遍历每节课
+        for (int j = 0; j < list_cls.size(); ++j) {
+            QString lessonName = list_cls[j] + list_subcls[0];
+            QString teacherName = list_cls[j] + list_subcls[1];
+            QString classroomName = list_cls[j] + list_subcls[2];
 
-    cfg.endGroup();
+            unit_lesson* lesson = nullptr;
+
+            // 根据当前是周几来选择对应的 unit_day
+            switch (i) {
+            case 0: lesson = &Loaded_Cources.monday.les1 + j; break;
+            case 1: lesson = &Loaded_Cources.tuesday.les1 + j; break;
+            case 2: lesson = &Loaded_Cources.wednesday.les1 + j; break;
+            case 3: lesson = &Loaded_Cources.thursday.les1 + j; break;
+            case 4: lesson = &Loaded_Cources.friday.les1 + j; break;
+            }
+
+            if (cfg.value(lessonName) == "none" && cfg.value(teacherName) == "none" && cfg.value(classroomName) == "none") {
+                lesson->is_this_exist = false;
+            } else {
+                lesson->is_this_exist = true;
+                lesson->Name = cfg.value(lessonName).toString();
+                lesson->Teacher = cfg.value(teacherName).toString();
+                lesson->Classroom = cfg.value(classroomName).toString();
+            }
+        }
+
+        // 结束当前组
+        cfg.endGroup();
+    }
 }
+
+
 
 void Reminder_class::on_pushButton_clicked()
 {
@@ -680,20 +693,51 @@ void Reminder_class::RecvSizeChanged(int processed)
 
 void Reminder_class::RecvTransparecyChanged(int processed)
 {
-    qDebug() << "Transparency: " << processed;
-    CurrentTransparency = QString::number(processed);
+    //qDebug() << "Transparency: " << processed;
+    QString str = "QFrame {border-bottom-left-radius: 20%;background-color: rgba(";
+    str += QString::number(QColor::fromString(CurrentColorInQColor).red());
+    str += ",";
+    str += QString::number(QColor::fromString(CurrentColorInQColor).green());
+    str += ",";
+    str += QString::number(QColor::fromString(CurrentColorInQColor).blue());
+    str += ",";
+    str += QString::number(processed);
+    str += ");}";
+    ui->frame->setStyleSheet(str);
+    CurrentTransparency = processed;
 }
 
-void Reminder_class::RecvChangeColor(QColor color)
+void Reminder_class::RecvChangeColor(QString color)
 {
-    QString str = "background-color: rgba(";
-    str += QString::number(color.red());
+    QString str = "QFrame {border-bottom-left-radius: 20%;background-color: rgba(";
+    str += QString::number(QColor::fromString(color).red());
     str += ",";
-    str += QString::number(color.green());
+    str += QString::number(QColor::fromString(color).green());
     str += ",";
-    str += QString::number(color.blue());
+    str += QString::number(QColor::fromString(color).blue());
     str += ",";
-    str += CurrentTransparency;
-    str += ");";
+    str += QString::number(CurrentTransparency);
+    str += ");}";
+    //qDebug() << "Color: " << str;
+    ui->frame->setStyleSheet(str);
+    CurrentColorInQColor = color;
+}
+
+void Reminder_class::ToggleTopBottom()
+{
+    if(isTop)
+    {
+        this->setWindowFlags(this->windowFlags()& ~Qt::WindowStaysOnTopHint);
+        setWindowFlag(Qt::WindowStaysOnBottomHint);
+        isTop = false;
+        this->show();
+    }
+    else
+    {
+        this->setWindowFlags(this->windowFlags()& ~Qt::WindowStaysOnBottomHint);
+        //setWindowFlag(Qt::WindowStaysOnTopHint);
+        isTop = true;
+        SetWindowPos((HWND)this->winId(),HWND_TOPMOST,this->pos().x(),this->pos().y(),this->size().width(),this->size().height(),SWP_SHOWWINDOW);
+    }
 }
 

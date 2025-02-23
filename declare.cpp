@@ -7,6 +7,15 @@ declare::declare(QWidget *parent)
     , ui(new Ui::declare)
 {
     ui->setupUi(this);
+    QString filename1 = QCoreApplication::applicationDirPath();
+    filename1 += "/config/cfg.ini";
+    QSettings cfg1(filename1, QSettings::IniFormat);
+    cfg1.beginGroup("Main");
+    //if(!cfg1.value("initialized").toBool())
+    //    return;
+    if(!cfg1.value("is_agreed").toBool())
+        this->show();
+
 }
 
 declare::~declare()
@@ -19,7 +28,6 @@ void declare::on_BTN_AGREE_clicked()
     QString filename = QCoreApplication::applicationDirPath();
     filename += "/config/cfg.ini";
     QSettings cfg(filename, QSettings::IniFormat);
-
     cfg.beginGroup("Main");
     cfg.setValue("is_agreed", true);
     cfg.endGroup();
@@ -29,6 +37,11 @@ void declare::on_BTN_AGREE_clicked()
 
 void declare::on_pushButton_clicked()
 {
+    QString filename = QCoreApplication::applicationDirPath();
+    filename += "/config/cfg.ini";
+    QSettings cfg(filename, QSettings::IniFormat);
+    cfg.beginGroup("Main");
+    cfg.setValue("is_agreed", false);
     QApplication::quit();
 }
 

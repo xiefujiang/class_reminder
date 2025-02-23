@@ -1,6 +1,4 @@
 #include "reminder_class.h"
-
-
 #include <QApplication>
 #include <QMenu>
 #include <QSystemTrayIcon>
@@ -14,20 +12,22 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    declare d;
-    QString filename = QCoreApplication::applicationDirPath();
-    unit_edit_page edit_page;
-    //edit_page.show();
-    filename += "/config/cfg.ini";
-    QSettings cfg(filename, QSettings::IniFormat);
-    cfg.beginGroup("Main");
-    if(cfg.value("is_agreed").toBool() != true)
-    {
-        d.show();
-    }
-    //-------------------------------------------
     Reminder_class w;
+    declare d;
     config_page b;
+    unit_edit_page edit_page;
+    //QString filename = QCoreApplication::applicationDirPath();
+    //edit_page.show();
+    //filename += "/config/cfg.ini";
+    //QSettings cfg(filename, QSettings::IniFormat);
+    //cfg.beginGroup("Main");
+    //if(!cfg.value("is_agreed").toBool())
+    //{
+        //d.show();
+    //}
+    //-------------------------------------------
+
+
     w.show();
 
     int font_id = QFontDatabase::addApplicationFont(":/font/res/cute_font.ttf");
@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
     QFont font(font_name, 12);
     QApplication::setFont(font);
     //qDebug() << font_name;
-    static bool isshowed = true;
-    static bool isTransparentForInput = true;
+    bool isshowed = true;
+    bool isTransparentForInput = true;
     QSystemTrayIcon tray = new QSystemTrayIcon();
     QIcon icon = QIcon(":/icon/res/Reminder_icon.png");
     tray.setIcon(icon);
@@ -45,10 +45,12 @@ int main(int argc, char *argv[])
     QAction *show = new QAction("显示/隐藏");
     QAction *config = new QAction("配置...");
     QAction *toggleInput = new QAction("切换鼠标穿透");
+    QAction *toggleTopBottom = new QAction("置顶/取消置顶");
     QAction *exit = new QAction("退出");
     menu->addAction(show);
     menu->addAction(config);
     menu->addAction(toggleInput);
+    //menu->addAction(toggleTopBottom);
     menu->addAction(exit);
     tray.setContextMenu(menu);
 
@@ -85,10 +87,12 @@ int main(int argc, char *argv[])
             w.show();
         }
     });
+    a.connect(toggleTopBottom, &QAction::triggered, &w, &Reminder_class::ToggleTopBottom);
     tray.show();
 
     a.connect(&b, &config_page::sendChangeSize, &w, &Reminder_class::RecvSizeChanged);
     a.connect(&b, &config_page::sendChangeTransparency, &w, &Reminder_class::RecvTransparecyChanged);
+    a.connect(&b, &config_page::sendChangeColor, &w, &Reminder_class::RecvChangeColor);
 
 
     return a.exec();

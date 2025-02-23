@@ -34,3 +34,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     res.qrc
+
+RC_ICONS = res\Reminder_icon_filled.ico

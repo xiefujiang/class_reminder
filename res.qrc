@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/icon">
         <file>res/Reminder_icon.png</file>
+        <file>res/Reminder_icon_filled.png</file>
     </qresource>
     <qresource prefix="/font">
         <file>res/cute_font.ttf</file>

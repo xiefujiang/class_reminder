@@ -87,7 +87,7 @@
     </font>
    </property>
    <property name="text">
-    <string>尊敬的工大同学：</string>
+    <string>同学你好：</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -106,7 +106,7 @@
     </font>
    </property>
    <property name="text">
-    <string>当您使用本程序作者（以下称“我们”）的程序并点击下方“我已知晓并同意”按钮时，代表您已知晓并同意以下信息：</string>
+    <string>当您使用本程序并点击下方“我已知晓并同意”按钮时，代表您已知晓并同意以下信息：</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
@@ -128,9 +128,12 @@
     </font>
    </property>
    <property name="text">
-    <string>        本程序为实现自动获取用户课表，可能会从您已登录的沈阳工业大学教务系统网站获取数据。为保护您的个人信息及相关隐私，在此，我们郑重声明：</string>
+    <string>        当您使用“配置”页面中的“自动导入”功能并输入学号密码时，本程序会使用该数据登录沈阳工业大学教务系统（&lt;a href=&quot;http://jwxt.sut.edu.cn&quot;&gt;jwxt.sut.edu.cn&lt;/a&gt;）以获取您的课表信息。为保护您的个人信息及相关隐私，在此，我们郑重声明：</string>
    </property>
    <property name="wordWrap">
+    <bool>true</bool>
+   </property>
+   <property name="openExternalLinks">
     <bool>true</bool>
    </property>
   </widget>
@@ -138,7 +141,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>250</y>
+     <y>260</y>
      <width>541</width>
      <height>211</height>
     </rect>
@@ -150,7 +153,7 @@
     </font>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;1.该数据仅用于本程序获取并处理用户个人课表，不会作其他用途。&lt;br/&gt;2.我们不会保存、处理、上传关于用户除课表外的任何个人信息，对于该爬取行为可能导致的您在沈阳工业大学教务系统网站上的账号风险、数据泄露风险或任何其他不良后果，我们将不承担任何责任。&lt;br/&gt;3.本程序为开源软件，为避免他人恶意修改代码后发布，请用户务必确保从官网或源代码发布页下载程序&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;1.该数据仅用于本程序获取并处理用户个人课表，不会作其他用途。&lt;br/&gt;2.我们不会保存、处理、上传关于用户除课表外的任何个人信息，对于该功能可能导致的保存在教务系统中其他个人信息的泄露，您将承担一切后果。&lt;br/&gt;3.本程序为开源软件，为避免他人恶意修改代码后发布，请用户务必确保从官网或源代码发布页下载程序&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
@@ -168,7 +171,7 @@
    <property name="font">
     <font>
      <family>MaoKenTangYuan (beta)</family>
-     <pointsize>9</pointsize>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="text">
@@ -187,13 +190,14 @@
    <property name="font">
     <font>
      <family>MaoKenTangYuan (beta)</family>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">color: rgb(0, 85, 255);</string>
+    <string notr="true">color: rgb(0, 170, 255);</string>
    </property>
    <property name="text">
-    <string>&lt;a href=&quot;https://github.com&quot;&gt;Github&lt;/a&gt;</string>
+    <string>&lt;a href=&quot;https://github.com/xiefujiang/class_reminder&quot;&gt;Github&lt;/a&gt;</string>
    </property>
    <property name="openExternalLinks">
     <bool>true</bool>

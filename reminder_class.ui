@@ -19,7 +19,8 @@
    <string>Reminder_class</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">border-bottom-left-radius: 20px;</string>
+   <string notr="true">border-bottom-left-radius: 20px;
+border-top-left-radius:0px;</string>
   </property>
   <widget class="QFrame" name="frame">
    <property name="geometry">
@@ -32,6 +33,7 @@
    </property>
    <property name="styleSheet">
     <string notr="true">border-bottom-left-radius: 20px;
+border-top-left-radius: 0px;
 background-color: rgba(255, 255, 255, 150);</string>
    </property>
    <property name="frameShape">
@@ -111,7 +113,7 @@ border-radius: 0px;</string>
      <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
     </property>
     <property name="text">
-     <string>11:11</string>
+     <string>2025-1-1</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_On_Checking">
@@ -133,7 +135,7 @@ border-radius: 0px;</string>
      <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
     </property>
     <property name="text">
-     <string>正在查看：      的课表</string>
+     <string>正在查看：      课表</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_Checking_wkday">
@@ -216,27 +218,27 @@ background-color: rgba(255, 255, 255, 0);</string>
     </column>
     <item row="0" column="0">
      <property name="text">
-      <string>1111</string>
+      <string>class_info_here</string>
      </property>
     </item>
     <item row="1" column="0">
      <property name="text">
-      <string>2222</string>
+      <string>class_info_here</string>
      </property>
     </item>
     <item row="2" column="0">
      <property name="text">
-      <string>3333</string>
+      <string>class_info_here</string>
      </property>
     </item>
     <item row="3" column="0">
      <property name="text">
-      <string>4444</string>
+      <string>class_info_here</string>
      </property>
     </item>
     <item row="4" column="0">
      <property name="text">
-      <string>5555</string>
+      <string>class_info_here</string>
      </property>
     </item>
    </widget>
